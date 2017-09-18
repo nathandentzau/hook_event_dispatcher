@@ -5,37 +5,37 @@
  * Hook event dispatcher module.
  */
 
-use Drupal\Core\Routing\RouteMatchInterface;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
-use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\hook_event_dispatcher\Event\Entity\EntityInsertEvent;
-use Drupal\hook_event_dispatcher\Event\Entity\EntityUpdateEvent;
-use Drupal\hook_event_dispatcher\Event\Entity\EntityPredeleteEvent;
-use Drupal\hook_event_dispatcher\Event\Entity\EntityDeleteEvent;
-use Drupal\hook_event_dispatcher\Event\Entity\EntityPresaveEvent;
-use Drupal\hook_event_dispatcher\Event\Entity\EntityViewEvent;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\hook_event_dispatcher\Event\Entity\EntityAccessEvent;
 use Drupal\hook_event_dispatcher\Event\Entity\EntityCreateEvent;
+use Drupal\hook_event_dispatcher\Event\Entity\EntityDeleteEvent;
+use Drupal\hook_event_dispatcher\Event\Entity\EntityInsertEvent;
 use Drupal\hook_event_dispatcher\Event\Entity\EntityLoadEvent;
+use Drupal\hook_event_dispatcher\Event\Entity\EntityPredeleteEvent;
+use Drupal\hook_event_dispatcher\Event\Entity\EntityPresaveEvent;
+use Drupal\hook_event_dispatcher\Event\Entity\EntityUpdateEvent;
+use Drupal\hook_event_dispatcher\Event\Entity\EntityViewEvent;
 use Drupal\hook_event_dispatcher\Event\Form\FormAlterEvent;
+use Drupal\hook_event_dispatcher\Event\Form\FormBaseAlterEvent;
 use Drupal\hook_event_dispatcher\Event\Form\FormIdAlterEvent;
 use Drupal\hook_event_dispatcher\Event\Form\WidgetFormAlterEvent;
 use Drupal\hook_event_dispatcher\Event\Form\WidgetTypeFormAlterEvent;
-use Drupal\hook_event_dispatcher\Event\Form\FormBaseAlterEvent;
 
 /**
  * Implements hook_help().
  *
  * {@inheritdoc}
  */
-function hook_event_dispatcher_help($route_name, RouteMatchInterface $route_match) {
-  switch ($route_name) {
-    case 'help.page.hook_event_dispatcher':
-      $output = file_get_contents(drupal_get_path('module', 'hook_event_dispatcher') . '/README.txt');
-      return '<pre>' . $output . '</pre>';
+function hook_event_dispatcher_help($routeName) {
+  if ($routeName === 'help.page.hook_event_dispatcher') {
+    $path = drupal_get_path('module', 'hook_event_dispatcher');
+    $output = file_get_contents($path . '/README.txt');
+    return '<pre>' . $output . '</pre>';
   }
+  return '';
 }
 
 /**
@@ -123,10 +123,10 @@ function hook_event_dispatcher_entity_create(EntityInterface $entity) {
  *
  * {@inheritdoc}
  */
-function hook_event_dispatcher_entity_load(array $entities, $entity_type_id) {
+function hook_event_dispatcher_entity_load(array $entities, $entityTypeId) {
   /** @var \Drupal\hook_event_dispatcher\Manager\HookEventDispatcherManager $manager */
   $manager = Drupal::service('hook_event_dispatcher.manager');
-  $manager->register(new EntityLoadEvent($entities, $entity_type_id));
+  $manager->register(new EntityLoadEvent($entities, $entityTypeId));
 }
 
 /**
@@ -134,10 +134,10 @@ function hook_event_dispatcher_entity_load(array $entities, $entity_type_id) {
  *
  * {@inheritdoc}
  */
-function hook_event_dispatcher_entity_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+function hook_event_dispatcher_entity_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $viewMode) {
   /** @var \Drupal\hook_event_dispatcher\Manager\HookEventDispatcherManager $manager */
   $manager = Drupal::service('hook_event_dispatcher.manager');
-  $manager->register(new EntityViewEvent($build, $entity, $display, $view_mode));
+  $manager->register(new EntityViewEvent($build, $entity, $display, $viewMode));
 }
 
 /**
@@ -145,16 +145,16 @@ function hook_event_dispatcher_entity_view(array &$build, EntityInterface $entit
  *
  * {@inheritdoc}
  */
-function hook_event_dispatcher_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+function hook_event_dispatcher_form_alter(&$form, FormStateInterface $formState, $formId) {
   /** @var \Drupal\hook_event_dispatcher\Manager\HookEventDispatcherManager $manager */
   $manager = Drupal::service('hook_event_dispatcher.manager');
-  $manager->register(new FormIdAlterEvent($form, $form_state, $form_id));
-  $manager->register(new FormAlterEvent($form, $form_state, $form_id));
+  $manager->register(new FormIdAlterEvent($form, $formState, $formId));
+  $manager->register(new FormAlterEvent($form, $formState, $formId));
 
-  $build_info = $form_state->getBuildInfo();
-  if (!empty($build_info['base_form_id'])) {
+  $buildInfo = $formState->getBuildInfo();
+  if (!empty($buildInfo['base_form_id'])) {
     /** @var \Drupal\hook_event_dispatcher\Event\Form\FormBaseAlterEvent $event */
-    $manager->register(new FormBaseAlterEvent($form, $form_state, $form_id, $build_info['base_form_id']));
+    $manager->register(new FormBaseAlterEvent($form, $formState, $formId, $buildInfo['base_form_id']));
   }
 }
 
@@ -163,11 +163,11 @@ function hook_event_dispatcher_form_alter(&$form, FormStateInterface $form_state
  *
  * {@inheritdoc}
  */
-function hook_event_dispatcher_field_widget_form_alter(&$element, FormStateInterface $form_state, $context) {
+function hook_event_dispatcher_field_widget_form_alter(&$element, FormStateInterface $formState, $context) {
   /** @var \Drupal\hook_event_dispatcher\Manager\HookEventDispatcherManager $manager */
   $manager = Drupal::service('hook_event_dispatcher.manager');
-  $manager->register(new WidgetTypeFormAlterEvent($element, $form_state, $context));
-  $manager->register(new WidgetFormAlterEvent($element, $form_state, $context));
+  $manager->register(new WidgetTypeFormAlterEvent($element, $formState, $context));
+  $manager->register(new WidgetFormAlterEvent($element, $formState, $context));
 }
 
 /**
